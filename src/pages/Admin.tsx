@@ -372,6 +372,59 @@ const Admin = () => {
             </Button>
           </div>
         )}
+
+        {tab === "users" && isAdmin && (
+          <div className="space-y-4">
+            <div className="bg-card rounded-2xl p-4 shadow-soft">
+              <h3 className="font-display text-foreground mb-1">User Management</h3>
+              <p className="text-xs text-muted-foreground mb-4">Tap role badges to toggle them on/off for each user.</p>
+              
+              {usersLoading ? (
+                <div className="text-center py-8 text-3xl animate-bounce">⏳</div>
+              ) : allUsers.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No users found.</p>
+              ) : (
+                <div className="space-y-3">
+                  {allUsers.map((u) => (
+                    <div key={u.user_id} className="bg-muted rounded-xl p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{u.avatar_emoji}</span>
+                        <div className="flex-1">
+                          <span className="font-bold text-foreground">{u.display_name}</span>
+                          <span className="text-muted-foreground text-xs block">
+                            {new Date(u.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {(["student", "teacher", "admin"] as const).map((role) => {
+                          const has = u.roles.includes(role);
+                          const icon = role === "admin" ? ShieldCheck : role === "teacher" ? GraduationCap : Shield;
+                          const Icon = icon;
+                          return (
+                            <button
+                              key={role}
+                              onClick={() => toggleRole(u.user_id, role, has)}
+                              disabled={u.user_id === user?.id && role === "admin"}
+                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                has
+                                  ? "bg-primary text-primary-foreground shadow-soft"
+                                  : "bg-background text-muted-foreground border border-border hover:border-primary"
+                              } ${u.user_id === user?.id && role === "admin" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            >
+                              <Icon className="w-3 h-3" />
+                              {role}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
