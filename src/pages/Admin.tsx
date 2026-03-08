@@ -1,24 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Upload, BookOpen, HelpCircle, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  WordItem, QuizQuestion,
-  getCustomWords, getCustomQuiz,
-  addCustomWord, addCustomQuiz,
-  saveCustomWords, saveCustomQuiz,
-} from "@/data/content";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { WordItem, QuizQuestion } from "@/data/content";
 
 type Tab = "words" | "quiz" | "csv";
 
+interface DbWord {
+  id: string;
+  word: string;
+  syllables: string[];
+  meaning: string;
+  emoji: string;
+  level: string;
+  category: string;
+  created_by: string;
+}
+
+interface DbQuiz {
+  id: string;
+  type: string;
+  level: string;
+  question: string;
+  options: string[];
+  correct: string;
+  emoji: string | null;
+  created_by: string;
+}
+
 const Admin = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("words");
-  const [customWords, setCustomWords] = useState(getCustomWords);
-  const [customQuiz, setCustomQuiz] = useState(getCustomQuiz);
+  const [customWords, setCustomWords] = useState<DbWord[]>([]);
+  const [customQuiz, setCustomQuiz] = useState<DbQuiz[]>([]);
 
   // Word form
   const [word, setWord] = useState("");
@@ -40,40 +60,47 @@ const Admin = () => {
   const [csvText, setCsvText] = useState("");
   const [csvType, setCsvType] = useState<"words" | "quiz">("words");
 
-  const handleAddWord = () => {
-    if (!word || !syllables || !meaning) return;
-    const newWord: WordItem = {
-      id: `cw-${Date.now()}`,
+  const loadData = async () => {
+    const { data: words } = await supabase.from("custom_words").select("*").order("created_at", { ascending: false });
+    const { data: quiz } = await supabase.from("custom_quiz").select("*").order("created_at", { ascending: false });
+    if (words) setCustomWords(words);
+    if (quiz) setCustomQuiz(quiz);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleAddWord = async () => {
+    if (!word || !syllables || !meaning || !user) return;
+    await supabase.from("custom_words").insert({
+      created_by: user.id,
       word: word.trim(),
       syllables: syllables.split(",").map(s => s.trim()),
       meaning: meaning.trim(),
       emoji: emoji.trim() || "📝",
       level: wordLevel,
       category: category.trim() || "custom",
-    };
-    addCustomWord(newWord);
-    setCustomWords(getCustomWords());
+    });
+    await loadData();
     setWord(""); setSyllables(""); setMeaning(""); setEmoji(""); setCategory("");
   };
 
-  const handleAddQuiz = () => {
-    if (!question || !options || !correct) return;
-    const newQ: QuizQuestion = {
-      id: `cq-${Date.now()}`,
+  const handleAddQuiz = async () => {
+    if (!question || !options || !correct || !user) return;
+    await supabase.from("custom_quiz").insert({
+      created_by: user.id,
       type: qType,
       level: qLevel,
       question: question.trim(),
       options: options.split(",").map(s => s.trim()),
       correct: correct.trim(),
-      emoji: qEmoji.trim() || undefined,
-    };
-    addCustomQuiz(newQ);
-    setCustomQuiz(getCustomQuiz());
+      emoji: qEmoji.trim() || null,
+    });
+    await loadData();
     setQuestion(""); setOptions(""); setCorrect(""); setQEmoji("");
   };
 
-  const handleCsvImport = () => {
-    if (!csvText.trim()) return;
+  const handleCsvImport = async () => {
+    if (!csvText.trim() || !user) return;
     const lines = csvText.trim().split("\n");
     let count = 0;
 
@@ -81,47 +108,44 @@ const Admin = () => {
       const cols = line.split(",").map(c => c.trim());
       if (csvType === "words" && cols.length >= 5) {
         const [w, syls, m, em, lvl, cat] = cols;
-        addCustomWord({
-          id: `cw-${Date.now()}-${count}`,
+        await supabase.from("custom_words").insert({
+          created_by: user.id,
           word: w,
           syllables: syls.split("|"),
           meaning: m,
           emoji: em || "📝",
-          level: (lvl as WordItem["level"]) || "beginner",
+          level: lvl || "beginner",
           category: cat || "custom",
         });
         count++;
       } else if (csvType === "quiz" && cols.length >= 5) {
         const [type, lvl, q, opts, cor, em] = cols;
-        addCustomQuiz({
-          id: `cq-${Date.now()}-${count}`,
-          type: (type as QuizQuestion["type"]) || "multiple-choice",
-          level: (lvl as QuizQuestion["level"]) || "beginner",
+        await supabase.from("custom_quiz").insert({
+          created_by: user.id,
+          type: type || "multiple-choice",
+          level: lvl || "beginner",
           question: q,
           options: opts.split("|"),
           correct: cor,
-          emoji: em || undefined,
+          emoji: em || null,
         });
         count++;
       }
     }
 
-    setCustomWords(getCustomWords());
-    setCustomQuiz(getCustomQuiz());
+    await loadData();
     setCsvText("");
     alert(`Imported ${count} items!`);
   };
 
-  const deleteWord = (id: string) => {
-    const updated = customWords.filter(w => w.id !== id);
-    saveCustomWords(updated);
-    setCustomWords(updated);
+  const deleteWord = async (id: string) => {
+    await supabase.from("custom_words").delete().eq("id", id);
+    await loadData();
   };
 
-  const deleteQuiz = (id: string) => {
-    const updated = customQuiz.filter(q => q.id !== id);
-    saveCustomQuiz(updated);
-    setCustomQuiz(updated);
+  const deleteQuiz = async (id: string) => {
+    await supabase.from("custom_quiz").delete().eq("id", id);
+    await loadData();
   };
 
   return (
@@ -133,7 +157,6 @@ const Admin = () => {
         <h1 className="text-xl font-display text-foreground">Admin Panel</h1>
       </header>
 
-      {/* Tabs */}
       <div className="flex border-b border-border">
         {([
           { id: "words" as Tab, label: "Words", icon: BookOpen },
@@ -154,7 +177,6 @@ const Admin = () => {
       </div>
 
       <main className="p-4 max-w-lg mx-auto space-y-6">
-        {/* Words Tab */}
         {tab === "words" && (
           <>
             <div className="bg-card rounded-2xl p-4 shadow-soft space-y-3">
@@ -166,11 +188,8 @@ const Admin = () => {
                 <Input placeholder="Emoji 📖" value={emoji} onChange={e => setEmoji(e.target.value)} className="w-24" />
                 <Input placeholder="Category" value={category} onChange={e => setCategory(e.target.value)} className="flex-1" />
               </div>
-              <select
-                value={wordLevel}
-                onChange={e => setWordLevel(e.target.value as WordItem["level"])}
-                className="w-full p-2 rounded-lg border border-input bg-background text-foreground"
-              >
+              <select value={wordLevel} onChange={e => setWordLevel(e.target.value as WordItem["level"])}
+                className="w-full p-2 rounded-lg border border-input bg-background text-foreground">
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
@@ -200,34 +219,27 @@ const Admin = () => {
           </>
         )}
 
-        {/* Quiz Tab */}
         {tab === "quiz" && (
           <>
             <div className="bg-card rounded-2xl p-4 shadow-soft space-y-3">
               <h3 className="font-display text-foreground">Add Quiz Question</h3>
-              <select
-                value={qType}
-                onChange={e => setQType(e.target.value as QuizQuestion["type"])}
-                className="w-full p-2 rounded-lg border border-input bg-background text-foreground"
-              >
+              <select value={qType} onChange={e => setQType(e.target.value as QuizQuestion["type"])}
+                className="w-full p-2 rounded-lg border border-input bg-background text-foreground">
                 <option value="multiple-choice">Multiple Choice</option>
                 <option value="word-building">Word Building</option>
                 <option value="sentence-order">Sentence Order</option>
                 <option value="image-matching">Image Matching</option>
               </select>
-              <select
-                value={qLevel}
-                onChange={e => setQLevel(e.target.value as QuizQuestion["level"])}
-                className="w-full p-2 rounded-lg border border-input bg-background text-foreground"
-              >
+              <select value={qLevel} onChange={e => setQLevel(e.target.value as QuizQuestion["level"])}
+                className="w-full p-2 rounded-lg border border-input bg-background text-foreground">
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
               </select>
               <Input placeholder="Question" value={question} onChange={e => setQuestion(e.target.value)} />
-              <Input placeholder="Options (comma-separated: opt1,opt2,opt3,opt4)" value={options} onChange={e => setOptions(e.target.value)} />
+              <Input placeholder="Options (comma-separated)" value={options} onChange={e => setOptions(e.target.value)} />
               <Input placeholder="Correct answer" value={correct} onChange={e => setCorrect(e.target.value)} />
-              <Input placeholder="Emoji (optional) 🔤" value={qEmoji} onChange={e => setQEmoji(e.target.value)} />
+              <Input placeholder="Emoji (optional)" value={qEmoji} onChange={e => setQEmoji(e.target.value)} />
               <Button variant="hero" className="w-full" onClick={handleAddQuiz}>
                 <Plus className="w-4 h-4" /> Add Question
               </Button>
@@ -253,15 +265,11 @@ const Admin = () => {
           </>
         )}
 
-        {/* CSV Tab */}
         {tab === "csv" && (
           <div className="bg-card rounded-2xl p-4 shadow-soft space-y-3">
             <h3 className="font-display text-foreground">Bulk CSV Import</h3>
-            <select
-              value={csvType}
-              onChange={e => setCsvType(e.target.value as "words" | "quiz")}
-              className="w-full p-2 rounded-lg border border-input bg-background text-foreground"
-            >
+            <select value={csvType} onChange={e => setCsvType(e.target.value as "words" | "quiz")}
+              className="w-full p-2 rounded-lg border border-input bg-background text-foreground">
               <option value="words">Words</option>
               <option value="quiz">Quiz Questions</option>
             </select>
@@ -280,12 +288,7 @@ const Admin = () => {
               )}
             </div>
 
-            <Textarea
-              placeholder="Paste CSV data here (one item per line)..."
-              value={csvText}
-              onChange={e => setCsvText(e.target.value)}
-              rows={8}
-            />
+            <Textarea placeholder="Paste CSV data here (one item per line)..." value={csvText} onChange={e => setCsvText(e.target.value)} rows={8} />
             <Button variant="hero" className="w-full" onClick={handleCsvImport}>
               <Upload className="w-4 h-4" /> Import CSV
             </Button>
