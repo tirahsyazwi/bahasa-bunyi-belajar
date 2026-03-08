@@ -45,7 +45,7 @@ interface DbQuiz {
 const Admin = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isTeacher, loading: roleLoading } = useRole();
+  const { isTeacher, isAdmin, loading: roleLoading } = useRole();
   const [tab, setTab] = useState<Tab>("words");
   const [customWords, setCustomWords] = useState<DbWord[]>([]);
   const [customQuiz, setCustomQuiz] = useState<DbQuiz[]>([]);
