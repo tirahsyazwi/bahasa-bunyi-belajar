@@ -5,21 +5,29 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl font-bold font-body ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-95",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-button",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        outline: "border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        hero: "gradient-hero text-primary-foreground shadow-button hover:opacity-90 text-lg",
+        warm: "gradient-warm text-secondary-foreground shadow-soft hover:opacity-90 text-lg",
+        fun: "gradient-fun text-foreground shadow-soft hover:opacity-90",
+        level: "bg-card text-card-foreground shadow-card hover:shadow-lg border-2 border-transparent hover:border-primary text-lg",
+        option: "bg-card text-card-foreground shadow-soft border-2 border-muted hover:border-primary text-base min-h-[3rem]",
+        correct: "bg-success text-success-foreground shadow-soft border-2 border-success text-base min-h-[3rem]",
+        wrong: "bg-destructive/10 text-destructive shadow-soft border-2 border-destructive text-base min-h-[3rem]",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
+        default: "h-10 px-4 py-2 text-sm",
+        sm: "h-9 rounded-xl px-3 text-sm",
+        lg: "h-12 rounded-2xl px-8 text-base",
+        xl: "h-14 rounded-2xl px-10 text-lg",
         icon: "h-10 w-10",
       },
     },
