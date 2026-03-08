@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Upload, BookOpen, HelpCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Upload, BookOpen, HelpCircle, Trash2, Users, Shield, ShieldCheck, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { WordItem, QuizQuestion } from "@/data/content";
 
-type Tab = "words" | "quiz" | "csv";
+type Tab = "words" | "quiz" | "csv" | "users";
+
+interface UserWithRoles {
+  user_id: string;
+  display_name: string;
+  avatar_emoji: string;
+  created_at: string;
+  roles: string[];
+}
 
 interface DbWord {
   id: string;
