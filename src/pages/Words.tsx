@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Volume2, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { wordsData } from "@/data/content";
+import { getAllWords } from "@/data/content";
 
 const Words = () => {
   const navigate = useNavigate();
