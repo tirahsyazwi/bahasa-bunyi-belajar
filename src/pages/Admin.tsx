@@ -234,11 +234,12 @@ const Admin = () => {
         <h1 className="text-xl font-display text-foreground">Admin Panel</h1>
       </header>
 
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-border overflow-x-auto">
         {([
           { id: "words" as Tab, label: "Words", icon: BookOpen },
           { id: "quiz" as Tab, label: "Quiz", icon: HelpCircle },
-          { id: "csv" as Tab, label: "CSV Import", icon: Upload },
+          { id: "csv" as Tab, label: "CSV", icon: Upload },
+          ...(isAdmin ? [{ id: "users" as Tab, label: "Users", icon: Users }] : []),
         ]).map(t => (
           <button
             key={t.id}
