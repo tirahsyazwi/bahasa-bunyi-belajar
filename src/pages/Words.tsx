@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Volume2, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAllWords } from "@/data/content";
+import SpeakButton from "@/components/SpeakButton";
 
 const Words = () => {
   const navigate = useNavigate();
@@ -17,13 +18,6 @@ const Words = () => {
     const matchCat = category === "all" || w.category === category;
     return matchSearch && matchCat;
   });
-
-  const speak = (text: string) => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ms-MY";
-    u.rate = 0.7;
-    speechSynthesis.speak(u);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,13 +61,12 @@ const Words = () => {
         {/* Word list */}
         <div className="grid gap-3">
           {filtered.map((word, i) => (
-            <motion.button
+            <motion.div
               key={word.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
-              onClick={() => speak(word.word)}
-              className="bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3 text-left hover:shadow-card transition-shadow active:scale-[0.98]"
+              className="bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3 text-left hover:shadow-card transition-shadow"
             >
               <span className="text-3xl">{word.emoji}</span>
               <div className="flex-1">
@@ -87,8 +80,8 @@ const Words = () => {
                   ))}
                 </div>
               </div>
-              <Volume2 className="w-4 h-4 text-muted-foreground" />
-            </motion.button>
+              <SpeakButton text={word.word} size="sm" />
+            </motion.div>
           ))}
         </div>
       </main>
