@@ -27,7 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
+      if (session) loadCustomContent().finally(() => setLoading(false));
+      else setLoading(false);
     });
 
     return () => subscription.unsubscribe();
