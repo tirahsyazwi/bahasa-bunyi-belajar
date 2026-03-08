@@ -37,9 +37,33 @@ interface DbQuiz {
 const Admin = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isTeacher, loading: roleLoading } = useRole();
   const [tab, setTab] = useState<Tab>("words");
   const [customWords, setCustomWords] = useState<DbWord[]>([]);
   const [customQuiz, setCustomQuiz] = useState<DbQuiz[]>([]);
+
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-5xl animate-bounce">⏳</div>
+      </div>
+    );
+  }
+
+  if (!isTeacher) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6">
+        <div className="text-6xl">🔒</div>
+        <h1 className="text-2xl font-display text-foreground">Akses Terhad</h1>
+        <p className="text-muted-foreground text-center max-w-sm">
+          Hanya guru dan admin sahaja boleh mengakses panel ini. Sila hubungi guru anda untuk mendapatkan akses.
+        </p>
+        <Button onClick={() => navigate("/")} variant="outline">
+          Kembali ke Utama
+        </Button>
+      </div>
+    );
+  }
 
   // Word form
   const [word, setWord] = useState("");
