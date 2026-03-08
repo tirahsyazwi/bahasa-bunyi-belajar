@@ -79,7 +79,49 @@ const Admin = () => {
     if (quiz) setCustomQuiz(quiz);
   };
 
+  const loadUsers = async () => {
+    if (!isAdmin) return;
+    setUsersLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("manage-roles", {
+        body: null,
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      // Edge function called via GET-like with query param, use fetch directly
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-roles?action=list`,
+        { headers: { Authorization: `Bearer ${session?.access_token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } }
+      );
+      if (response.ok) {
+        const users = await response.json();
+        setAllUsers(users);
+      }
+    } catch (e) {
+      console.error("Failed to load users:", e);
+    }
+    setUsersLoading(false);
+  };
+
+  const toggleRole = async (userId: string, role: string, currentlyHas: boolean) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-roles?action=set-role`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: userId, role, remove: currentlyHas }),
+      }
+    );
+    await loadUsers();
+  };
+
   useEffect(() => { if (isTeacher) loadData(); }, [isTeacher]);
+  useEffect(() => { if (isAdmin && tab === "users") loadUsers(); }, [isAdmin, tab]);
 
   if (roleLoading) {
     return (
