@@ -14,7 +14,168 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      custom_quiz: {
+        Row: {
+          correct: string
+          created_at: string
+          created_by: string
+          emoji: string | null
+          id: string
+          level: string
+          options: string[]
+          question: string
+          type: string
+        }
+        Insert: {
+          correct: string
+          created_at?: string
+          created_by: string
+          emoji?: string | null
+          id?: string
+          level?: string
+          options: string[]
+          question: string
+          type?: string
+        }
+        Update: {
+          correct?: string
+          created_at?: string
+          created_by?: string
+          emoji?: string | null
+          id?: string
+          level?: string
+          options?: string[]
+          question?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      custom_words: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          emoji: string
+          id: string
+          level: string
+          meaning: string
+          syllables: string[]
+          word: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          emoji?: string
+          id?: string
+          level?: string
+          meaning: string
+          syllables: string[]
+          word: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          emoji?: string
+          id?: string
+          level?: string
+          meaning?: string
+          syllables?: string[]
+          word?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_emoji: string
+          created_at: string
+          display_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_emoji?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_emoji?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_scores: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          badges: string[]
+          created_at: string
+          current_level: string
+          id: string
+          lessons_completed: number
+          total_stars: number
+          updated_at: string
+          user_id: string
+          words_learned: string[]
+        }
+        Insert: {
+          badges?: string[]
+          created_at?: string
+          current_level?: string
+          id?: string
+          lessons_completed?: number
+          total_stars?: number
+          updated_at?: string
+          user_id: string
+          words_learned?: string[]
+        }
+        Update: {
+          badges?: string[]
+          created_at?: string
+          current_level?: string
+          id?: string
+          lessons_completed?: number
+          total_stars?: number
+          updated_at?: string
+          user_id?: string
+          words_learned?: string[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
