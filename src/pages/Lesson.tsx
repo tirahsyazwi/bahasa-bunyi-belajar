@@ -65,10 +65,10 @@ const Lesson = () => {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const stars = step.content.stars || 3;
-    addStars(stars);
-    completeLesson();
+    await addStars(stars);
+    await completeLesson();
     navigate(`/quiz/${level}`);
   };
 

@@ -1,41 +1,17 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, Star, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getProgress } from "@/data/progress";
+import { useProgress } from "@/hooks/use-progress";
 
 const levels = [
-  {
-    id: "beginner",
-    title: "Tahap 1",
-    subtitle: "Fonik & Perkataan",
-    description: "Learn vowels, consonants, and basic words",
-    emoji: "🔤",
-    color: "bg-mint",
-    requiredStars: 0,
-  },
-  {
-    id: "intermediate",
-    title: "Tahap 2",
-    subtitle: "Ayat Mudah",
-    description: "Build simple sentences",
-    emoji: "📝",
-    color: "bg-sky",
-    requiredStars: 10,
-  },
-  {
-    id: "advanced",
-    title: "Tahap 3",
-    subtitle: "Perbualan",
-    description: "Conversations and comprehension",
-    emoji: "💬",
-    color: "bg-lavender",
-    requiredStars: 25,
-  },
+  { id: "beginner", title: "Tahap 1", subtitle: "Fonik & Perkataan", description: "Learn vowels, consonants, and basic words", emoji: "🔤", color: "bg-mint", requiredStars: 0 },
+  { id: "intermediate", title: "Tahap 2", subtitle: "Ayat Mudah", description: "Build simple sentences", emoji: "📝", color: "bg-sky", requiredStars: 10 },
+  { id: "advanced", title: "Tahap 3", subtitle: "Perbualan", description: "Conversations and comprehension", emoji: "💬", color: "bg-lavender", requiredStars: 25 },
 ];
 
 const LevelSelect = () => {
   const navigate = useNavigate();
-  const progress = getProgress();
+  const { progress } = useProgress();
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,7 +29,6 @@ const LevelSelect = () => {
       <main className="px-6 pb-8 space-y-4 max-w-lg mx-auto">
         {levels.map((level, i) => {
           const isLocked = progress.totalStars < level.requiredStars;
-
           return (
             <motion.button
               key={level.id}
@@ -63,7 +38,7 @@ const LevelSelect = () => {
               onClick={() => !isLocked && navigate(`/lesson/${level.id}`)}
               disabled={isLocked}
               className={`w-full p-5 rounded-3xl shadow-card flex items-center gap-4 text-left transition-all
-                ${isLocked ? "opacity-50 bg-muted" : `bg-card hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]`}
+                ${isLocked ? "opacity-50 bg-muted" : "bg-card hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"}
               `}
             >
               <div className={`w-16 h-16 rounded-2xl ${level.color} flex items-center justify-center text-3xl`}>
@@ -83,12 +58,8 @@ const LevelSelect = () => {
           );
         })}
 
-        {/* Quick actions */}
         <div className="pt-4 grid grid-cols-3 gap-3">
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+          <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
             onClick={() => navigate("/words")}
             className="p-4 rounded-2xl bg-peach shadow-soft text-center hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
@@ -97,10 +68,7 @@ const LevelSelect = () => {
             <span className="text-xs text-muted-foreground block">Word List</span>
           </motion.button>
 
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+          <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             onClick={() => navigate("/progress")}
             className="p-4 rounded-2xl bg-mint shadow-soft text-center hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
@@ -109,10 +77,7 @@ const LevelSelect = () => {
             <span className="text-xs text-muted-foreground block">Progress</span>
           </motion.button>
 
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+          <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
             onClick={() => navigate("/admin")}
             className="p-4 rounded-2xl bg-lavender shadow-soft text-center hover:scale-[1.02] active:scale-[0.98] transition-all"
           >

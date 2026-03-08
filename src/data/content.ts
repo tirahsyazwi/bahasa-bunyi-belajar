@@ -306,51 +306,54 @@ export function getWordsByLevel(level: WordItem["level"]): WordItem[] {
   return wordsData.filter((w) => w.level === level);
 }
 
-// ===== Custom Content Management (localStorage) =====
-const CUSTOM_WORDS_KEY = "bahasa-buddy-custom-words";
-const CUSTOM_QUIZ_KEY = "bahasa-buddy-custom-quiz";
+// ===== Custom Content from Database =====
+import { supabase } from "@/integrations/supabase/client";
 
-export function getCustomWords(): WordItem[] {
-  const stored = localStorage.getItem(CUSTOM_WORDS_KEY);
-  return stored ? JSON.parse(stored) : [];
+// Cache for custom content (refreshed on demand)
+let _cachedCustomWords: WordItem[] = [];
+let _cachedCustomQuiz: QuizQuestion[] = [];
+let _cacheLoaded = false;
+
+export async function loadCustomContent() {
+  const { data: words } = await supabase.from("custom_words").select("*");
+  const { data: quiz } = await supabase.from("custom_quiz").select("*");
+
+  _cachedCustomWords = (words || []).map(w => ({
+    id: w.id,
+    word: w.word,
+    syllables: w.syllables,
+    meaning: w.meaning,
+    emoji: w.emoji,
+    level: w.level as WordItem["level"],
+    category: w.category,
+  }));
+
+  _cachedCustomQuiz = (quiz || []).map(q => ({
+    id: q.id,
+    type: q.type as QuizQuestion["type"],
+    level: q.level as QuizQuestion["level"],
+    question: q.question,
+    options: q.options,
+    correct: q.correct,
+    emoji: q.emoji || undefined,
+  }));
+
+  _cacheLoaded = true;
 }
 
-export function saveCustomWords(words: WordItem[]) {
-  localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(words));
-}
-
-export function addCustomWord(word: WordItem) {
-  const words = getCustomWords();
-  words.push(word);
-  saveCustomWords(words);
-}
-
-export function getCustomQuiz(): QuizQuestion[] {
-  const stored = localStorage.getItem(CUSTOM_QUIZ_KEY);
-  return stored ? JSON.parse(stored) : [];
-}
-
-export function saveCustomQuiz(quiz: QuizQuestion[]) {
-  localStorage.setItem(CUSTOM_QUIZ_KEY, JSON.stringify(quiz));
-}
-
-export function addCustomQuiz(q: QuizQuestion) {
-  const quiz = getCustomQuiz();
-  quiz.push(q);
-  saveCustomQuiz(quiz);
-}
-
-// Get all words (built-in + custom)
+// Get all words (built-in + custom from DB cache)
 export function getAllWords(): WordItem[] {
-  return [...wordsData, ...getCustomWords()];
+  return [...wordsData, ..._cachedCustomWords];
 }
 
-// Get all quiz questions (built-in + custom)
+// Get all quiz questions (built-in + custom from DB cache)
 export function getAllQuiz(): QuizQuestion[] {
-  return [...quizData, ...getCustomQuiz()];
+  return [...quizData, ..._cachedCustomQuiz];
 }
 
 export function getAllQuizByLevel(level: QuizQuestion["level"], count: number = 5): QuizQuestion[] {
   const all = getAllQuiz().filter((q) => q.level === level);
   return getRandomItems(all, Math.min(count, all.length));
 }
+
+export function isCacheLoaded() { return _cacheLoaded; }
