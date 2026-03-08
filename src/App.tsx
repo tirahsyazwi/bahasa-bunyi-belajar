@@ -9,6 +9,7 @@ import Lesson from "./pages/Lesson";
 import Quiz from "./pages/Quiz";
 import Progress from "./pages/Progress";
 import Words from "./pages/Words";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
