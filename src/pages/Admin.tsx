@@ -69,6 +69,8 @@ const Admin = () => {
   // CSV
   const [csvText, setCsvText] = useState("");
   const [csvType, setCsvType] = useState<"words" | "quiz">("words");
+  const [allUsers, setAllUsers] = useState<UserWithRoles[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const loadData = async () => {
     const { data: words } = await supabase.from("custom_words").select("*").order("created_at", { ascending: false });
