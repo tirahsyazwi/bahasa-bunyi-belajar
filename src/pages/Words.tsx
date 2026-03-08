@@ -2,16 +2,17 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Volume2, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { wordsData } from "@/data/content";
+import { getAllWords } from "@/data/content";
 
 const Words = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const allWords = getAllWords();
 
-  const categories = ["all", ...Array.from(new Set(wordsData.map((w) => w.category)))];
+  const categories = ["all", ...Array.from(new Set(allWords.map((w) => w.category)))];
 
-  const filtered = wordsData.filter((w) => {
+  const filtered = allWords.filter((w) => {
     const matchSearch = w.word.includes(search.toLowerCase()) || w.meaning.toLowerCase().includes(search.toLowerCase());
     const matchCat = category === "all" || w.category === category;
     return matchSearch && matchCat;

@@ -9,6 +9,7 @@ import Lesson from "./pages/Lesson";
 import Quiz from "./pages/Quiz";
 import Progress from "./pages/Progress";
 import Words from "./pages/Words";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/quiz/:level" element={<Quiz />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/words" element={<Words />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
