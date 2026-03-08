@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Upload, BookOpen, HelpCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Upload, BookOpen, HelpCircle, Trash2, Users, Shield, ShieldCheck, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { WordItem, QuizQuestion } from "@/data/content";
 
-type Tab = "words" | "quiz" | "csv";
+type Tab = "words" | "quiz" | "csv" | "users";
+
+interface UserWithRoles {
+  user_id: string;
+  display_name: string;
+  avatar_emoji: string;
+  created_at: string;
+  roles: string[];
+}
 
 interface DbWord {
   id: string;
@@ -37,7 +45,7 @@ interface DbQuiz {
 const Admin = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isTeacher, loading: roleLoading } = useRole();
+  const { isTeacher, isAdmin, loading: roleLoading } = useRole();
   const [tab, setTab] = useState<Tab>("words");
   const [customWords, setCustomWords] = useState<DbWord[]>([]);
   const [customQuiz, setCustomQuiz] = useState<DbQuiz[]>([]);
@@ -61,6 +69,8 @@ const Admin = () => {
   // CSV
   const [csvText, setCsvText] = useState("");
   const [csvType, setCsvType] = useState<"words" | "quiz">("words");
+  const [allUsers, setAllUsers] = useState<UserWithRoles[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const loadData = async () => {
     const { data: words } = await supabase.from("custom_words").select("*").order("created_at", { ascending: false });
@@ -69,7 +79,49 @@ const Admin = () => {
     if (quiz) setCustomQuiz(quiz);
   };
 
+  const loadUsers = async () => {
+    if (!isAdmin) return;
+    setUsersLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("manage-roles", {
+        body: null,
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      // Edge function called via GET-like with query param, use fetch directly
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-roles?action=list`,
+        { headers: { Authorization: `Bearer ${session?.access_token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } }
+      );
+      if (response.ok) {
+        const users = await response.json();
+        setAllUsers(users);
+      }
+    } catch (e) {
+      console.error("Failed to load users:", e);
+    }
+    setUsersLoading(false);
+  };
+
+  const toggleRole = async (userId: string, role: string, currentlyHas: boolean) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-roles?action=set-role`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: userId, role, remove: currentlyHas }),
+      }
+    );
+    await loadUsers();
+  };
+
   useEffect(() => { if (isTeacher) loadData(); }, [isTeacher]);
+  useEffect(() => { if (isAdmin && tab === "users") loadUsers(); }, [isAdmin, tab]);
 
   if (roleLoading) {
     return (
@@ -182,11 +234,12 @@ const Admin = () => {
         <h1 className="text-xl font-display text-foreground">Admin Panel</h1>
       </header>
 
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-border overflow-x-auto">
         {([
           { id: "words" as Tab, label: "Words", icon: BookOpen },
           { id: "quiz" as Tab, label: "Quiz", icon: HelpCircle },
-          { id: "csv" as Tab, label: "CSV Import", icon: Upload },
+          { id: "csv" as Tab, label: "CSV", icon: Upload },
+          ...(isAdmin ? [{ id: "users" as Tab, label: "Users", icon: Users }] : []),
         ]).map(t => (
           <button
             key={t.id}
@@ -317,6 +370,59 @@ const Admin = () => {
             <Button variant="hero" className="w-full" onClick={handleCsvImport}>
               <Upload className="w-4 h-4" /> Import CSV
             </Button>
+          </div>
+        )}
+
+        {tab === "users" && isAdmin && (
+          <div className="space-y-4">
+            <div className="bg-card rounded-2xl p-4 shadow-soft">
+              <h3 className="font-display text-foreground mb-1">User Management</h3>
+              <p className="text-xs text-muted-foreground mb-4">Tap role badges to toggle them on/off for each user.</p>
+              
+              {usersLoading ? (
+                <div className="text-center py-8 text-3xl animate-bounce">⏳</div>
+              ) : allUsers.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No users found.</p>
+              ) : (
+                <div className="space-y-3">
+                  {allUsers.map((u) => (
+                    <div key={u.user_id} className="bg-muted rounded-xl p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{u.avatar_emoji}</span>
+                        <div className="flex-1">
+                          <span className="font-bold text-foreground">{u.display_name}</span>
+                          <span className="text-muted-foreground text-xs block">
+                            {new Date(u.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {(["student", "teacher", "admin"] as const).map((role) => {
+                          const has = u.roles.includes(role);
+                          const icon = role === "admin" ? ShieldCheck : role === "teacher" ? GraduationCap : Shield;
+                          const Icon = icon;
+                          return (
+                            <button
+                              key={role}
+                              onClick={() => toggleRole(u.user_id, role, has)}
+                              disabled={u.user_id === user?.id && role === "admin"}
+                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                has
+                                  ? "bg-primary text-primary-foreground shadow-soft"
+                                  : "bg-background text-muted-foreground border border-border hover:border-primary"
+                              } ${u.user_id === user?.id && role === "admin" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            >
+                              <Icon className="w-3 h-3" />
+                              {role}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
