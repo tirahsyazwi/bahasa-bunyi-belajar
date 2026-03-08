@@ -62,6 +62,15 @@ const Admin = () => {
   const [csvText, setCsvText] = useState("");
   const [csvType, setCsvType] = useState<"words" | "quiz">("words");
 
+  const loadData = async () => {
+    const { data: words } = await supabase.from("custom_words").select("*").order("created_at", { ascending: false });
+    const { data: quiz } = await supabase.from("custom_quiz").select("*").order("created_at", { ascending: false });
+    if (words) setCustomWords(words);
+    if (quiz) setCustomQuiz(quiz);
+  };
+
+  useEffect(() => { if (isTeacher) loadData(); }, [isTeacher]);
+
   if (roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -84,15 +93,6 @@ const Admin = () => {
       </div>
     );
   }
-
-  const loadData = async () => {
-    const { data: words } = await supabase.from("custom_words").select("*").order("created_at", { ascending: false });
-    const { data: quiz } = await supabase.from("custom_quiz").select("*").order("created_at", { ascending: false });
-    if (words) setCustomWords(words);
-    if (quiz) setCustomQuiz(quiz);
-  };
-
-  useEffect(() => { loadData(); }, []);
 
   const handleAddWord = async () => {
     if (!word || !syllables || !meaning || !user) return;

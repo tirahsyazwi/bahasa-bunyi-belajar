@@ -13,6 +13,7 @@ const levels = [
 const LevelSelect = () => {
   const navigate = useNavigate();
   const { progress } = useProgress();
+  const { isTeacher } = useRole();
 
   return (
     <div className="min-h-screen bg-background">
