@@ -27,6 +27,7 @@ const App = () => (
           <Route path="/quiz/:level" element={<Quiz />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/words" element={<Words />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
