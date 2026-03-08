@@ -5,6 +5,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { phonicsData, getWordsByLevel, wordsData, sentencesData, vowels, consonants } from "@/data/content";
 import { completeLesson, learnWord, addStars } from "@/data/progress";
+import { useSpeech } from "@/hooks/use-speech";
+import SpeakButton from "@/components/SpeakButton";
 
 type LessonStep = { type: string; content: any };
 
@@ -12,15 +14,12 @@ function buildLessonSteps(level: string): LessonStep[] {
   const steps: LessonStep[] = [];
 
   if (level === "beginner") {
-    // Vowels intro
     steps.push({ type: "intro", content: { title: "Huruf Vokal", subtitle: "Vowels", emoji: "🔤", description: "Let's learn the 5 vowel sounds!" } });
     steps.push({ type: "vowels", content: { vowels } });
-    // KV Phonics
     const randomConsonants = [...consonants].sort(() => Math.random() - 0.5).slice(0, 3);
     randomConsonants.forEach((c) => {
       steps.push({ type: "phonics", content: { consonant: c, vowels, syllables: vowels.map((v) => `${c}${v}`) } });
     });
-    // Words
     const words = getWordsByLevel("beginner").sort(() => Math.random() - 0.5).slice(0, 5);
     words.forEach((w) => {
       steps.push({ type: "word", content: w });
@@ -54,6 +53,7 @@ const Lesson = () => {
   const [steps] = useState(() => buildLessonSteps(level));
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedSyllables, setSelectedSyllables] = useState<string[]>([]);
+  const { speak, isSpeaking } = useSpeech();
 
   const step = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
@@ -70,13 +70,6 @@ const Lesson = () => {
     addStars(stars);
     completeLesson();
     navigate(`/quiz/${level}`);
-  };
-
-  const speak = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "ms-MY";
-    utterance.rate = 0.7;
-    speechSynthesis.speak(utterance);
   };
 
   return (
@@ -126,7 +119,9 @@ const Lesson = () => {
                       whileTap={{ scale: 0.9 }}
                       whileHover={{ scale: 1.1 }}
                       onClick={() => speak(v)}
-                      className="w-16 h-16 rounded-2xl bg-secondary shadow-card flex items-center justify-center text-3xl font-display text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className={`w-16 h-16 rounded-2xl shadow-card flex items-center justify-center text-3xl font-display transition-colors ${
+                        isSpeaking ? "bg-accent text-accent-foreground" : "bg-secondary text-primary hover:bg-primary hover:text-primary-foreground"
+                      }`}
                     >
                       {v}
                     </motion.button>
@@ -179,6 +174,7 @@ const Lesson = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
+                  className="flex flex-col items-center"
                 >
                   <button
                     onClick={() => {
@@ -188,7 +184,12 @@ const Lesson = () => {
                     className="text-3xl font-display text-foreground flex items-center justify-center gap-2 mx-auto hover:text-primary transition-colors"
                   >
                     {step.content.word}
-                    <Volume2 className="w-5 h-5" />
+                    <motion.div
+                      animate={isSpeaking ? { scale: [1, 1.3, 1] } : {}}
+                      transition={isSpeaking ? { repeat: Infinity, duration: 0.5 } : {}}
+                    >
+                      <Volume2 className={`w-5 h-5 ${isSpeaking ? "text-accent" : ""}`} />
+                    </motion.div>
                   </button>
                   <p className="text-muted-foreground mt-1">{step.content.meaning}</p>
                 </motion.div>
@@ -211,13 +212,7 @@ const Lesson = () => {
                     </motion.span>
                   ))}
                 </div>
-                <button
-                  onClick={() => speak(step.content.sentence)}
-                  className="flex items-center gap-2 mx-auto text-primary font-bold hover:opacity-80"
-                >
-                  <Volume2 className="w-5 h-5" />
-                  Listen
-                </button>
+                <SpeakButton text={step.content.sentence} label="Dengar 🔊" size="md" />
                 <p className="text-muted-foreground text-sm mt-3">"{step.content.meaning}"</p>
               </div>
             )}
@@ -235,7 +230,7 @@ const Lesson = () => {
                   >
                     <button
                       onClick={() => speak(line.text)}
-                      className={`max-w-[80%] p-4 rounded-2xl shadow-soft ${
+                      className={`max-w-[80%] p-4 rounded-2xl shadow-soft transition-colors ${
                         line.speaker === "A" ? "bg-sky rounded-bl-none" : "bg-peach rounded-br-none"
                       }`}
                     >
@@ -243,7 +238,13 @@ const Lesson = () => {
                         {line.speaker === "A" ? "👤 Speaker A" : "👧 Speaker B"}
                       </span>
                       <span className="text-lg font-bold text-foreground flex items-center gap-2">
-                        {line.text} <Volume2 className="w-4 h-4 text-muted-foreground" />
+                        {line.text}
+                        <motion.div
+                          animate={isSpeaking ? { scale: [1, 1.2, 1] } : {}}
+                          transition={isSpeaking ? { repeat: Infinity, duration: 0.6 } : {}}
+                        >
+                          <Volume2 className={`w-4 h-4 ${isSpeaking ? "text-accent" : "text-muted-foreground"}`} />
+                        </motion.div>
                       </span>
                     </button>
                   </motion.div>
