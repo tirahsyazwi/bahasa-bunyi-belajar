@@ -42,6 +42,26 @@ const Admin = () => {
   const [customWords, setCustomWords] = useState<DbWord[]>([]);
   const [customQuiz, setCustomQuiz] = useState<DbQuiz[]>([]);
 
+  // Word form
+  const [word, setWord] = useState("");
+  const [syllables, setSyllables] = useState("");
+  const [meaning, setMeaning] = useState("");
+  const [emoji, setEmoji] = useState("");
+  const [wordLevel, setWordLevel] = useState<"beginner" | "intermediate" | "advanced">("beginner");
+  const [category, setCategory] = useState("");
+
+  // Quiz form
+  const [qType, setQType] = useState<QuizQuestion["type"]>("multiple-choice");
+  const [qLevel, setQLevel] = useState<QuizQuestion["level"]>("beginner");
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState("");
+  const [correct, setCorrect] = useState("");
+  const [qEmoji, setQEmoji] = useState("");
+
+  // CSV
+  const [csvText, setCsvText] = useState("");
+  const [csvType, setCsvType] = useState<"words" | "quiz">("words");
+
   if (roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -64,26 +84,6 @@ const Admin = () => {
       </div>
     );
   }
-
-  // Word form
-  const [word, setWord] = useState("");
-  const [syllables, setSyllables] = useState("");
-  const [meaning, setMeaning] = useState("");
-  const [emoji, setEmoji] = useState("");
-  const [wordLevel, setWordLevel] = useState<"beginner" | "intermediate" | "advanced">("beginner");
-  const [category, setCategory] = useState("");
-
-  // Quiz form
-  const [qType, setQType] = useState<QuizQuestion["type"]>("multiple-choice");
-  const [qLevel, setQLevel] = useState<QuizQuestion["level"]>("beginner");
-  const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState("");
-  const [correct, setCorrect] = useState("");
-  const [qEmoji, setQEmoji] = useState("");
-
-  // CSV
-  const [csvText, setCsvText] = useState("");
-  const [csvType, setCsvType] = useState<"words" | "quiz">("words");
 
   const loadData = async () => {
     const { data: words } = await supabase.from("custom_words").select("*").order("created_at", { ascending: false });

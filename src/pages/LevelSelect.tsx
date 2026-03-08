@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Star, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProgress } from "@/hooks/use-progress";
+import { useRole } from "@/hooks/use-role";
 
 const levels = [
   { id: "beginner", title: "Tahap 1", subtitle: "Fonik & Perkataan", description: "Learn vowels, consonants, and basic words", emoji: "🔤", color: "bg-mint", requiredStars: 0 },
