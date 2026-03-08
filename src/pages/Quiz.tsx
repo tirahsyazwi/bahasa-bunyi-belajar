@@ -3,13 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getQuizByLevel, QuizQuestion } from "@/data/content";
+import { getAllQuizByLevel, QuizQuestion } from "@/data/content";
 import { addQuizScore } from "@/data/progress";
+import QuizMultipleChoice from "@/components/quiz/QuizMultipleChoice";
+import QuizWordBuilding from "@/components/quiz/QuizWordBuilding";
+import QuizSentenceOrder from "@/components/quiz/QuizSentenceOrder";
+import QuizImageMatching from "@/components/quiz/QuizImageMatching";
+import QuizFeedback from "@/components/quiz/QuizFeedback";
+import QuizComplete from "@/components/quiz/QuizComplete";
 
 const Quiz = () => {
   const { level = "beginner" } = useParams();
   const navigate = useNavigate();
-  const questions = useMemo(() => getQuizByLevel(level as QuizQuestion["level"], 8), [level]);
+  const questions = useMemo(() => getAllQuizByLevel(level as QuizQuestion["level"], 8), [level]);
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -46,9 +52,8 @@ const Quiz = () => {
     if (selected !== null) return;
     const newWords = [...sentenceWords, word];
     setSentenceWords(newWords);
-    const built = newWords.join(" ");
     if (newWords.length === q.options.length) {
-      handleAnswer(built);
+      handleAnswer(newWords.join(" "));
     }
   };
 
@@ -56,9 +61,8 @@ const Quiz = () => {
     if (selected !== null) return;
     const newSyls = [...buildSyllables, syl];
     setBuildSyllables(newSyls);
-    const built = newSyls.join("");
     if (newSyls.length === 2) {
-      handleAnswer(built);
+      handleAnswer(newSyls.join(""));
     }
   };
 
@@ -74,37 +78,7 @@ const Quiz = () => {
   }
 
   if (done) {
-    const stars = Math.ceil((score / questions.length) * 5);
-    const isPerfect = score === questions.length;
-
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }} className="text-7xl mb-4">
-          {isPerfect ? "🏆" : score > questions.length / 2 ? "🎉" : "💪"}
-        </motion.div>
-        <h2 className="text-3xl font-display text-foreground mb-2">
-          {isPerfect ? "Sempurna!" : score > questions.length / 2 ? "Bagus!" : "Cuba lagi!"}
-        </h2>
-        <p className="text-lg text-muted-foreground mb-4">
-          {score} / {questions.length} betul
-        </p>
-        <div className="flex gap-1 mb-6">
-          {Array.from({ length: stars }).map((_, i) => (
-            <motion.span key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: i * 0.15 }} className="text-3xl">
-              ⭐
-            </motion.span>
-          ))}
-        </div>
-        <div className="space-y-3 w-full max-w-xs">
-          <Button variant="hero" size="lg" className="w-full" onClick={() => navigate(`/quiz/${level}`)}>
-            Cuba Lagi 🔄
-          </Button>
-          <Button variant="level" size="lg" className="w-full" onClick={() => navigate("/levels")}>
-            Kembali ke Menu
-          </Button>
-        </div>
-      </div>
-    );
+    return <QuizComplete score={score} total={questions.length} level={level} />;
   }
 
   return (
@@ -135,107 +109,34 @@ const Quiz = () => {
             <h3 className="text-xl font-display text-foreground text-center mb-6">{q.question}</h3>
 
             {q.type === "multiple-choice" && (
-              <div className="space-y-3">
-                {q.options.map((opt) => {
-                  let variant: "option" | "correct" | "wrong" = "option";
-                  if (selected !== null) {
-                    if (opt === q.correct) variant = "correct";
-                    else if (opt === selected) variant = "wrong";
-                  }
-                  return (
-                    <Button
-                      key={opt}
-                      variant={variant}
-                      className="w-full justify-start text-left"
-                      onClick={() => handleAnswer(opt)}
-                    >
-                      {opt}
-                      {selected && opt === q.correct && <CheckCircle className="w-5 h-5 ml-auto" />}
-                      {selected && opt === selected && opt !== q.correct && <XCircle className="w-5 h-5 ml-auto" />}
-                    </Button>
-                  );
-                })}
-              </div>
+              <QuizMultipleChoice q={q} selected={selected} onAnswer={handleAnswer} />
+            )}
+
+            {q.type === "image-matching" && (
+              <QuizImageMatching q={q} selected={selected} isCorrect={isCorrect} onAnswer={handleAnswer} />
             )}
 
             {q.type === "word-building" && (
-              <div>
-                <div className="flex justify-center gap-2 mb-6 min-h-[3rem]">
-                  {buildSyllables.map((s, i) => (
-                    <motion.span key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-display text-xl">
-                      {s}
-                    </motion.span>
-                  ))}
-                  {buildSyllables.length === 0 && <span className="text-muted-foreground">Tap syllables to build the word</span>}
-                </div>
-                <div className="flex justify-center gap-3 flex-wrap">
-                  {q.options.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant={
-                        selected !== null
-                          ? isCorrect
-                            ? "correct"
-                            : "wrong"
-                          : "option"
-                      }
-                      size="lg"
-                      onClick={() => handleBuildSyllable(opt)}
-                      disabled={buildSyllables.includes(opt) || selected !== null}
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+              <QuizWordBuilding
+                q={q}
+                selected={selected}
+                isCorrect={isCorrect}
+                buildSyllables={buildSyllables}
+                onBuildSyllable={handleBuildSyllable}
+              />
             )}
 
             {q.type === "sentence-order" && (
-              <div>
-                <div className="flex justify-center gap-2 mb-6 min-h-[3rem] flex-wrap">
-                  {sentenceWords.map((w, i) => (
-                    <motion.span key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} className="px-3 py-2 rounded-xl bg-primary text-primary-foreground font-bold">
-                      {w}
-                    </motion.span>
-                  ))}
-                  {sentenceWords.length === 0 && <span className="text-muted-foreground">Tap words in order</span>}
-                </div>
-                <div className="flex justify-center gap-3 flex-wrap">
-                  {q.options.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant={
-                        selected !== null
-                          ? isCorrect
-                            ? "correct"
-                            : "wrong"
-                          : "option"
-                      }
-                      size="lg"
-                      onClick={() => handleSentenceWord(opt)}
-                      disabled={sentenceWords.includes(opt) || selected !== null}
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+              <QuizSentenceOrder
+                q={q}
+                selected={selected}
+                isCorrect={isCorrect}
+                sentenceWords={sentenceWords}
+                onSentenceWord={handleSentenceWord}
+              />
             )}
 
-            {/* Feedback */}
-            <AnimatePresence>
-              {selected !== null && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`mt-6 p-4 rounded-2xl text-center font-bold ${
-                    isCorrect ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                  }`}
-                >
-                  {isCorrect ? "✅ Betul! Correct!" : `❌ Jawapan betul: ${q.correct}`}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <QuizFeedback selected={selected} isCorrect={isCorrect} correct={q.correct} />
           </motion.div>
         </AnimatePresence>
       </main>
