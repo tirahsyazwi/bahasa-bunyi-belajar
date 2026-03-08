@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Star, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProgress } from "@/hooks/use-progress";
+import { useRole } from "@/hooks/use-role";
 
 const levels = [
   { id: "beginner", title: "Tahap 1", subtitle: "Fonik & Perkataan", description: "Learn vowels, consonants, and basic words", emoji: "🔤", color: "bg-mint", requiredStars: 0 },
@@ -12,6 +13,7 @@ const levels = [
 const LevelSelect = () => {
   const navigate = useNavigate();
   const { progress } = useProgress();
+  const { isTeacher } = useRole();
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,14 +79,16 @@ const LevelSelect = () => {
             <span className="text-xs text-muted-foreground block">Progress</span>
           </motion.button>
 
-          <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-            onClick={() => navigate("/admin")}
-            className="p-4 rounded-2xl bg-lavender shadow-soft text-center hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            <span className="text-3xl block mb-1">⚙️</span>
-            <span className="font-bold text-sm text-foreground">Admin</span>
-            <span className="text-xs text-muted-foreground block">Manage</span>
-          </motion.button>
+          {isTeacher && (
+            <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+              onClick={() => navigate("/admin")}
+              className="p-4 rounded-2xl bg-lavender shadow-soft text-center hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <span className="text-3xl block mb-1">⚙️</span>
+              <span className="font-bold text-sm text-foreground">Admin</span>
+              <span className="text-xs text-muted-foreground block">Manage</span>
+            </motion.button>
+          )}
         </div>
       </main>
     </div>
